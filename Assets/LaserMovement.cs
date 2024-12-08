@@ -15,6 +15,12 @@ public class LaserMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         audioSource = GetComponent<AudioSource>();
+        // Set initial volume for the AudioSource based on saved SFX volume
+        if (audioSource != null)
+        {
+            float savedVolume = PlayerPrefs.GetFloat("SFXVolume", 1.0f); // Default to 1.0f if not set
+            audioSource.volume = savedVolume;
+        }
         GameObject player = GameObject.FindWithTag("Player");
         isMovingRight = player.transform.localScale.x > 0;
         float horizontalSpeed = isMovingRight ? SPEED : -SPEED;
@@ -26,16 +32,16 @@ public class LaserMovement : MonoBehaviour
         // Check if the laser hits an AI object
         if (collision.CompareTag("AI"))
         {
-            // Play the hit sound
-            if (hitSound != null)
+            AIMovement balloon = collision.GetComponent<AIMovement>();
+            if (balloon != null)
             {
-                audioSource.PlayOneShot(hitSound);
+                Debug.Log("collision");
+                balloon.PopBalloon();
             }
-
+            //Destroy(collision.gameObject); // Destroy the AI
+            Destroy(gameObject); // Destroy the laser
             // Destroy the AI and the laser
             Debug.Log("Hit object: " + collision.gameObject.name);
-            Destroy(collision.gameObject); // Destroy the AI
-            Destroy(gameObject); // Destroy the laser
         }
     }
 }

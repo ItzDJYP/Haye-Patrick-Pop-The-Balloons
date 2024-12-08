@@ -9,18 +9,29 @@ public class Movement : MonoBehaviour
     [SerializeField] const int Speed = 10;
     [SerializeField] bool isFacingRight = true;
     [SerializeField] const float jumpForce = 500.0f;
-    [SerializeField] bool isJumpPressed = true;
+    [SerializeField] bool isJumpPressed = false;
     [SerializeField] bool isGrounded = true;
     [SerializeField] GameObject laserPrefab; // Drag your laser prefab here in the Inspector
     [SerializeField] Transform firePoint;    // Assign the fire point (where the laser will spawn) in the Inspector
     [SerializeField] float fireRate = 0.5f;  // Time between each shot
     [SerializeField] private float nextFireTime = 0f;
+    [SerializeField] Animator animator;
+
+    const int IDLE = 0;
+    const int RUN = 1;
+    const int JUMP = 2;
 
     // Start is called before the first frame update
-    void Start(){
-        if(rigid == null){
+    void Start()
+    {
+        if (rigid == null)
+        {
             rigid = GetComponent<Rigidbody2D>();
         }
+        if (animator == null) { 
+        animator = GetComponent<Animator>();
+        animator.SetInteger("motion", IDLE);
+    }
     } 
 
     // Update is called once per frame
@@ -44,6 +55,21 @@ public class Movement : MonoBehaviour
         if(isJumpPressed && isGrounded){
             Jump();
         }
+        else
+        {
+            isJumpPressed = false;
+            if (isGrounded)
+            {
+                if (movement > 0 || movement < 0)
+                {
+                    animator.SetInteger("motion", RUN);
+                }
+                else
+                {
+                    animator.SetInteger("motion", IDLE);
+                }
+            }
+        }
     }
 
     // called when to flip the model if the user is going a different direction
@@ -54,7 +80,9 @@ public class Movement : MonoBehaviour
 
     // called when to jump
     private void Jump(){
+        animator.SetInteger("motion", JUMP);
         rigid.velocity = new Vector2(rigid.velocity.x, 0);
+        isJumpPressed = false;
         rigid.AddForce(new Vector2 (0, jumpForce));
         isGrounded = false;
     }
@@ -63,6 +91,7 @@ public class Movement : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision) {
         if(collision.gameObject.tag == "Ground"){
             isGrounded = true;
+            animator.SetInteger("motion", IDLE);
         }
     }
     void ShootLaser()

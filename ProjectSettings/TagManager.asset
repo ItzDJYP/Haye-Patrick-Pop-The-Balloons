@@ -6,11 +6,14 @@ TagManager:
   tags:
   - Ground
   - AI
+  - Laser
+  - ShowInPauseMode
+  - ShowInPlayMode
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Models
   - Water
   - UI
   - 

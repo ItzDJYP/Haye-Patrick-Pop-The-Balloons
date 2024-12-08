@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
+using UnityEngine.SceneManagement;
 public class AIMovement : MonoBehaviour
 {
     // Expansion settings
@@ -15,17 +17,29 @@ public class AIMovement : MonoBehaviour
     [SerializeField] bool isFacingRight = true;
     [SerializeField] float leftBoundary = -5f;
     [SerializeField] float rightBoundary = 5f;
+    [SerializeField] GameObject controller;
+    private Scorekeeper scorekeeper;
     // Audio Stuff
     [SerializeField] private AudioClip popSound; // Assign the pop sound in the Inspector
-    private AudioSource audioSource;
+    [SerializeField] AudioSource audioSource;
 
     // Start is called before the first frame update
     void Start()
     {
-        if(rigid == null){
+        if (rigid == null){
             rigid = GetComponent<Rigidbody2D>();
         }
-        audioSource = GetComponent<AudioSource>();
+        if (controller == null)
+        {
+            controller = GameObject.FindGameObjectWithTag("AI");
+        }
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            float savedVolume = PlayerPrefs.GetFloat("SFXVolume", 1.0f); // Default to 1.0f if not set
+            audioSource.volume = savedVolume;
+        }
+        scorekeeper = FindObjectOfType<Scorekeeper>();
         InvokeRepeating("ExpandBalloon", 1f, expansionInterval);
     }
 
@@ -54,7 +68,7 @@ public class AIMovement : MonoBehaviour
             PopBalloon();
         }
     }
-    void PopBalloon()
+    public void PopBalloon()
     {
         isPopped = true; // Mark the balloon as popped
         CancelInvoke("ExpandBalloon");  // Stop expanding
@@ -62,7 +76,14 @@ public class AIMovement : MonoBehaviour
         // Add additional effects here, like playing a sound or animation
         if (popSound != null && audioSource != null)
         {
-            audioSource.PlayOneShot(popSound);
+            float savedVolume = PlayerPrefs.GetFloat("SFXVolume", 1.0f); // Load the saved volume
+            audioSource.volume = savedVolume; // Update the volume before playing the sound
+
+        }
+
+        if (scorekeeper != null)
+        {
+            scorekeeper.BalloonPopped();
         }
         Destroy(gameObject); // Destroy the balloon object (pop it)
     }
@@ -76,6 +97,20 @@ public class AIMovement : MonoBehaviour
         rigid.velocity = new Vector2 (AImovement * SPEED, rigid.velocity.y);
         if(AImovement < 0 && isFacingRight || AImovement > 0 && !isFacingRight){
             Flip();
+        }
+    }
+    void OnTriggerEnter2D(Collider2D collision)
+    {
+        //what should happen on collision?
+        //1. score should increase
+        //2. sound effect should play
+        //3. coin should be removed from the scene
+        
+        //controller.GetComponent<Scorekeeper>().AddPoints();
+        if(collision.CompareTag("Laser"))
+        {
+            AudioSource.PlayClipAtPoint(audioSource.clip, transform.position);
+            PopBalloon();
         }
     }
 }
